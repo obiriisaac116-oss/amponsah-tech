@@ -2,20 +2,20 @@ import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { lookupBooking, cancelBooking } from '../api/services';
-import { SpinnerIcon, CalendarIcon, ClockIcon, CheckCircleIcon } from '../components/Icons';
+import { SpinnerIcon } from '../components/Icons';
 
-const STATUS_COLORS = {
-  pending:   'bg-yellow-100 text-yellow-700',
-  confirmed: 'bg-blue-100 text-blue-700',
-  completed: 'bg-green-100 text-green-700',
-  cancelled: 'bg-red-100 text-red-700',
-  'no-show': 'bg-gray-100 text-gray-600',
+const STATUS_META = {
+  pending:   { bg: '#fefce8', color: '#854d0e', border: '#fde68a', label: 'Pending' },
+  confirmed: { bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe', label: 'Confirmed' },
+  completed: { bg: '#f0fdf4', color: '#15803d', border: '#bbf7d0', label: 'Completed' },
+  cancelled: { bg: '#fef2f2', color: '#dc2626', border: '#fecaca', label: 'Cancelled' },
+  'no-show': { bg: '#f8fafc', color: '#64748b', border: '#e2e8f0', label: 'No-show'  },
 };
 
 export default function LookupPage() {
   const [code, setCode] = useState('');
   const [booking, setBooking] = useState(null);
-  const [cancelling, setCancelling] = useState(false);
+  const [confirming, setConfirming] = useState(false);
 
   const lookupMutation = useMutation({
     mutationFn: () => lookupBooking(code.trim().toUpperCase()),
@@ -28,125 +28,211 @@ export default function LookupPage() {
     onSuccess: () => {
       toast.success('Booking cancelled.');
       setBooking((prev) => ({ ...prev, status: 'cancelled' }));
-      setCancelling(false);
+      setConfirming(false);
     },
     onError: (err) => toast.error(err.message),
   });
 
   const service = booking?.serviceSnapshot || booking?.service;
   const customer = booking?.customer;
+  const statusMeta = STATUS_META[booking?.status] || STATUS_META.pending;
+  const canCancel = ['pending', 'confirmed'].includes(booking?.status);
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-12">
-      <h1 className="text-3xl font-bold text-gray-900 mb-2">Find My Booking</h1>
-      <p className="text-gray-500 mb-8">Enter your confirmation code to view or manage your booking.</p>
+    <div style={{ background: '#f8fafc', minHeight: '100vh' }}>
+      {/* Header */}
+      <div style={{ background: 'linear-gradient(135deg,#1e3a8a,#1e40af)', padding: '3rem 1rem 2rem' }}>
+        <div style={{ maxWidth: 520, margin: '0 auto' }}>
+          <h1 style={{ fontSize: 'clamp(1.5rem,4vw,2rem)', fontWeight: 900, color: 'white', marginBottom: 6 }}>
+            Find My Booking
+          </h1>
+          <p style={{ color: '#bfdbfe', fontSize: 14, marginBottom: '1.5rem' }}>
+            Enter your confirmation code to view or manage your appointment.
+          </p>
 
-      {/* Search form */}
-      <div className="card mb-6">
-        <label className="block text-sm font-medium text-gray-700 mb-1">Confirmation Code</label>
-        <div className="flex gap-3">
-          <input
-            value={code}
-            onChange={(e) => setCode(e.target.value.toUpperCase())}
-            placeholder="e.g. ABC12345"
-            maxLength={8}
-            className="input flex-1 uppercase tracking-widest font-mono"
-            onKeyDown={(e) => e.key === 'Enter' && lookupMutation.mutate()}
-          />
-          <button
-            onClick={() => lookupMutation.mutate()}
-            disabled={code.length < 5 || lookupMutation.isPending}
-            className="btn-primary px-5 flex items-center gap-2"
-          >
-            {lookupMutation.isPending && <SpinnerIcon className="w-4 h-4" />}
-            Find
-          </button>
+          {/* Search input */}
+          <div style={{ display: 'flex', gap: 10 }}>
+            <input
+              value={code}
+              onChange={(e) => setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
+              onKeyDown={(e) => e.key === 'Enter' && code.length >= 5 && lookupMutation.mutate()}
+              placeholder="e.g. ABC12345"
+              maxLength={8}
+              style={{
+                flex: 1, padding: '0.75rem 1rem', borderRadius: '0.75rem',
+                border: '2px solid rgba(255,255,255,0.3)', background: 'rgba(255,255,255,0.1)',
+                color: 'white', fontSize: 16, fontFamily: 'monospace', fontWeight: 700,
+                letterSpacing: '0.15em', outline: 'none',
+              }}
+            />
+            <button
+              onClick={() => lookupMutation.mutate()}
+              disabled={code.length < 5 || lookupMutation.isPending}
+              style={{
+                background: code.length >= 5 ? 'white' : 'rgba(255,255,255,0.2)',
+                color: code.length >= 5 ? '#1e3a8a' : 'rgba(255,255,255,0.5)',
+                fontWeight: 800, fontSize: 14, padding: '0.75rem 1.25rem',
+                borderRadius: '0.75rem', border: 'none', cursor: code.length >= 5 ? 'pointer' : 'not-allowed',
+                transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: 6,
+                minWidth: 80,
+              }}
+            >
+              {lookupMutation.isPending ? <SpinnerIcon className="w-4 h-4" /> : '🔍 Find'}
+            </button>
+          </div>
+        </div>
+
+        {/* Wave */}
+        <div style={{ lineHeight: 0, marginTop: '1.5rem' }}>
+          <svg viewBox="0 0 1440 40" preserveAspectRatio="none" style={{ width: '100%', height: 36, display: 'block' }}>
+            <path d="M0,20 C360,50 1080,0 1440,20 L1440,40 L0,40 Z" fill="#f8fafc"/>
+          </svg>
         </div>
       </div>
 
-      {/* Result */}
-      {booking && (
-        <div className="card space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="font-semibold text-gray-900">Booking Details</h2>
-            <span className={`text-xs font-semibold px-2 py-1 rounded-full capitalize ${STATUS_COLORS[booking.status] || 'bg-gray-100 text-gray-600'}`}>
-              {booking.status}
-            </span>
-          </div>
+      <div style={{ maxWidth: 520, margin: '0 auto', padding: '1.5rem 1rem 4rem' }}>
 
-          <div className="bg-brand-50 rounded-xl py-3 text-center">
-            <p className="text-xs text-brand-600 font-medium uppercase tracking-widest mb-0.5">Confirmation Code</p>
-            <p className="text-xl font-bold text-brand-700 tracking-widest">{booking.confirmationCode}</p>
+        {/* Empty state */}
+        {!booking && !lookupMutation.isPending && (
+          <div style={{ textAlign: 'center', padding: '3rem 1rem', color: '#94a3b8' }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>🔎</div>
+            <p style={{ fontWeight: 600, fontSize: 14, color: '#64748b' }}>Enter your confirmation code above</p>
+            <p style={{ fontSize: 12, marginTop: 6 }}>The code was included in your booking confirmation email</p>
           </div>
+        )}
 
-          <div className="space-y-2 text-sm">
-            <Row label="Service"  value={service?.name} />
-            <Row
-              label="Date"
-              value={booking.date}
-              icon={<CalendarIcon className="w-4 h-4 text-gray-400" />}
-            />
-            <Row
-              label="Time"
-              value={booking.time}
-              icon={<ClockIcon className="w-4 h-4 text-gray-400" />}
-            />
-            <Row label="Price"    value={`${service?.currency || ''} ${Number(service?.price || 0).toFixed(2)}`} highlight />
-            <div className="border-t pt-3">
-              <p className="text-gray-500 mb-1">Customer</p>
-              <p className="font-medium">{customer?.name}</p>
-              <p className="text-gray-400 text-xs">{customer?.email}</p>
+        {/* Result card */}
+        {booking && (
+          <div style={{ background: 'white', borderRadius: '1.25rem', border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 2px 10px rgba(0,0,0,0.06)' }}>
+
+            {/* Card header */}
+            <div style={{ padding: '1.25rem', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <p style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>
+                  Confirmation Code
+                </p>
+                <p style={{ fontSize: 20, fontWeight: 900, color: '#0f172a', letterSpacing: '0.15em', fontFamily: 'monospace' }}>
+                  {booking.confirmationCode}
+                </p>
+              </div>
+              <span style={{
+                padding: '4px 12px', borderRadius: 999, fontSize: 12, fontWeight: 700,
+                background: statusMeta.bg, color: statusMeta.color, border: `1px solid ${statusMeta.border}`,
+              }}>
+                {statusMeta.label}
+              </span>
             </div>
-          </div>
 
-          {/* Cancel button */}
-          {['pending', 'confirmed'].includes(booking.status) && (
-            <div className="pt-2">
-              {cancelling ? (
-                <div className="space-y-3">
-                  <p className="text-sm text-red-600 font-medium">Are you sure you want to cancel this booking?</p>
-                  <div className="flex gap-3">
-                    <button onClick={() => setCancelling(false)} className="btn-secondary flex-1 text-sm">
-                      Keep Booking
-                    </button>
-                    <button
-                      onClick={() => cancelMutation.mutate()}
-                      disabled={cancelMutation.isPending}
-                      className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2.5 px-4 rounded-lg transition-colors text-sm flex items-center justify-center gap-2"
-                    >
-                      {cancelMutation.isPending && <SpinnerIcon className="w-4 h-4" />}
-                      Yes, Cancel
-                    </button>
+            {/* Details */}
+            <div style={{ padding: '1.25rem', borderBottom: '1px solid #f1f5f9' }}>
+              <p style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>
+                Appointment
+              </p>
+              <DetailRow icon="🔧" label="Service"  value={service?.name} />
+              <DetailRow icon="📅" label="Date"     value={booking.date} />
+              <DetailRow icon="🕐" label="Time"     value={booking.time} />
+              <DetailRow icon="💰" label="Price"    value={`${service?.currency || ''} ${Number(service?.price || 0).toFixed(2)}`} highlight />
+            </div>
+
+            {/* Customer */}
+            <div style={{ padding: '1.25rem', borderBottom: canCancel ? '1px solid #f1f5f9' : 'none' }}>
+              <p style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>
+                Customer
+              </p>
+              <DetailRow icon="👤" label="Name"  value={customer?.name} />
+              <DetailRow icon="✉"  label="Email" value={customer?.email} />
+            </div>
+
+            {/* Cancel section */}
+            {canCancel && (
+              <div style={{ padding: '1.25rem' }}>
+                {confirming ? (
+                  <div>
+                    <div style={{ background: '#fef2f2', borderRadius: '0.75rem', padding: '0.875rem', marginBottom: '0.875rem', border: '1px solid #fecaca' }}>
+                      <p style={{ fontWeight: 700, color: '#dc2626', fontSize: 14, marginBottom: 4 }}>Cancel this booking?</p>
+                      <p style={{ fontSize: 12, color: '#94a3b8' }}>This action cannot be undone.</p>
+                    </div>
+                    <div style={{ display: 'flex', gap: 10 }}>
+                      <button
+                        onClick={() => setConfirming(false)}
+                        style={{
+                          flex: 1, padding: '0.7rem', borderRadius: '0.625rem',
+                          border: '1.5px solid #cbd5e1', background: 'white', color: '#1e3a8a',
+                          fontWeight: 700, fontSize: 14, cursor: 'pointer',
+                        }}
+                      >
+                        Keep It
+                      </button>
+                      <button
+                        onClick={() => cancelMutation.mutate()}
+                        disabled={cancelMutation.isPending}
+                        style={{
+                          flex: 1, padding: '0.7rem', borderRadius: '0.625rem',
+                          background: '#dc2626', color: 'white', border: 'none',
+                          fontWeight: 700, fontSize: 14, cursor: cancelMutation.isPending ? 'not-allowed' : 'pointer',
+                          opacity: cancelMutation.isPending ? 0.6 : 1,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                        }}
+                      >
+                        {cancelMutation.isPending && <SpinnerIcon className="w-4 h-4" />}
+                        Yes, Cancel
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <button
-                  onClick={() => setCancelling(true)}
-                  className="w-full border-2 border-red-200 text-red-600 hover:bg-red-50 font-semibold py-2.5 px-4 rounded-lg transition-colors text-sm"
-                >
-                  Cancel Booking
-                </button>
-              )}
-            </div>
-          )}
+                ) : (
+                  <button
+                    onClick={() => setConfirming(true)}
+                    style={{
+                      width: '100%', padding: '0.7rem', borderRadius: '0.625rem',
+                      border: '1.5px solid #fecaca', background: '#fef2f2', color: '#dc2626',
+                      fontWeight: 700, fontSize: 14, cursor: 'pointer', transition: 'all 0.15s',
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.background = '#fee2e2'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = '#fef2f2'; }}
+                  >
+                    Cancel This Booking
+                  </button>
+                )}
+              </div>
+            )}
 
-          {booking.status === 'cancelled' && (
-            <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-50 rounded-lg p-3">
-              <CheckCircleIcon className="w-4 h-4 text-gray-400" />
-              This booking has been cancelled.
-            </div>
-          )}
-        </div>
-      )}
+            {/* Completed / cancelled state */}
+            {booking.status === 'cancelled' && (
+              <div style={{ padding: '1rem 1.25rem', background: '#fef2f2', display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#dc2626' }}>
+                <span>❌</span> This booking has been cancelled.
+              </div>
+            )}
+            {booking.status === 'completed' && (
+              <div style={{ padding: '1rem 1.25rem', background: '#f0fdf4', display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#16a34a' }}>
+                <span>✅</span> This appointment has been completed. Thank you!
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Book again nudge */}
+        {booking && (
+          <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
+            <a href="/book" style={{ color: '#1e3a8a', fontWeight: 700, fontSize: 13, textDecoration: 'none' }}>
+              📅 Book another service →
+            </a>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
-function Row({ label, value, highlight, icon }) {
+function DetailRow({ icon, label, value, highlight }) {
+  if (!value) return null;
   return (
-    <div className="flex justify-between items-center">
-      <span className="text-gray-500 flex items-center gap-1">{icon}{label}</span>
-      <span className={`font-medium ${highlight ? 'text-brand-600' : 'text-gray-800'}`}>{value}</span>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 0', fontSize: 13, borderBottom: '1px solid #f8fafc' }}>
+      <span style={{ color: '#64748b', display: 'flex', alignItems: 'center', gap: 6 }}>
+        <span>{icon}</span>{label}
+      </span>
+      <span style={{ fontWeight: highlight ? 800 : 600, color: highlight ? '#1e3a8a' : '#1e293b' }}>
+        {value}
+      </span>
     </div>
   );
 }
