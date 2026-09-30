@@ -1,15 +1,21 @@
 import axios from 'axios';
 
-// In dev, Vite proxies /api → localhost:5000 (vite.config.js)
-// In production (Netlify), VITE_API_URL must point to the Render backend
-// e.g. https://amponsah-tech-api.onrender.com
+// Priority:
+//  1. VITE_API_URL env var set in Netlify dashboard
+//  2. Hardcoded Render backend URL (fallback so the site works even if env var is missing)
+//  3. /api proxy — only works in local dev (Vite proxy)
+const RENDER_URL = 'https://amponsah-tech-api.onrender.com';
+
 const baseURL = import.meta.env.VITE_API_URL
   ? `${import.meta.env.VITE_API_URL}/api`
-  : '/api';
+  : import.meta.env.DEV
+    ? '/api'                    // local dev → Vite proxy
+    : `${RENDER_URL}/api`;      // production → Render directly
 
 const api = axios.create({
   baseURL,
   headers: { 'Content-Type': 'application/json' },
+  timeout: 15000,
 });
 
 // Attach JWT for admin calls
