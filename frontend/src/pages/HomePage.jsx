@@ -134,7 +134,7 @@ export default function HomePage() {
           <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', marginBottom: 8 }}>What We Do</h2>
           <p style={{ color: '#64748b', fontSize: 14 }}>Expert installation and ongoing support for all your tech needs.</p>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: '1.5rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,260px),1fr))', gap: '1.5rem' }}>
           {WHAT_WE_DO.map(({ icon, title, body, bg, color, border }) => (
             <div key={title} style={{
               background: 'white', borderRadius: '1.25rem', padding: '1.75rem',
@@ -173,13 +173,13 @@ export default function HomePage() {
           </div>
 
           {isLoading ? (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: '1.5rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(min(100%,280px),1fr))', gap: '1.5rem' }}>
               {[1,2,3,4,5,6].map(i => (
                 <div key={i} style={{ background: '#e2e8f0', borderRadius: '1.25rem', height: 240, animation: 'pulse 1.5s infinite' }} />
               ))}
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: '1.5rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(min(100%,280px),1fr))', gap: '1.5rem' }}>
               {services.slice(0, 6).map(s => <ServiceCard key={s._id} service={s} />)}
             </div>
           )}
@@ -207,7 +207,7 @@ export default function HomePage() {
           <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', marginBottom: 8 }}>Why Choose Amponsah Tech?</h2>
           <p style={{ color: '#64748b', fontSize: 14 }}>We don't just install — we build lasting partnerships.</p>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: '1.25rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,200px),1fr))', gap: '1.25rem' }}>
           {WHY_US.map(({ icon, label, sub }) => (
             <div key={label} style={{
               background: 'white', borderRadius: '1.25rem', padding: '1.5rem', textAlign: 'center',
