@@ -6,13 +6,29 @@ import { SpinnerIcon } from '../../components/Icons';
 
 const STATUSES = ['all', 'pending', 'confirmed', 'completed', 'cancelled', 'no-show'];
 
-const STATUS_BADGE = {
-  pending:   'bg-yellow-100 text-yellow-700',
-  confirmed: 'bg-blue-100 text-blue-700',
-  completed: 'bg-green-100 text-green-700',
-  cancelled: 'bg-red-100 text-red-700',
-  'no-show': 'bg-gray-100 text-gray-600',
+const STATUS_STYLE = {
+  pending:   { bg: '#fefce8', color: '#854d0e', border: '#fde68a' },
+  confirmed: { bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe' },
+  completed: { bg: '#f0fdf4', color: '#15803d', border: '#bbf7d0' },
+  cancelled: { bg: '#fef2f2', color: '#dc2626', border: '#fecaca' },
+  'no-show': { bg: '#f8fafc', color: '#64748b', border: '#e2e8f0' },
 };
+
+function ActionBtn({ label, color, onClick }) {
+  const colors = {
+    blue:  { bg: '#eff6ff', text: '#1d4ed8' },
+    green: { bg: '#f0fdf4', text: '#15803d' },
+    red:   { bg: '#fef2f2', text: '#dc2626' },
+    gray:  { bg: '#f8fafc', text: '#64748b' },
+  }[color] || { bg: '#f8fafc', text: '#374151' };
+
+  return (
+    <button onClick={onClick}
+      style={{ fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 6, background: colors.bg, color: colors.text, border: 'none', cursor: 'pointer' }}>
+      {label}
+    </button>
+  );
+}
 
 export default function BookingsPage() {
   const qc = useQueryClient();
@@ -23,184 +39,151 @@ export default function BookingsPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-bookings', page, status, search, date],
-    queryFn: () =>
-      fetchBookings({
-        page,
-        limit: 15,
-        ...(status !== 'all' && { status }),
-        ...(search && { search }),
-        ...(date && { date }),
-      }),
+    queryFn: () => fetchBookings({ page, limit: 15, ...(status !== 'all' && { status }), ...(search && { search }), ...(date && { date }) }),
     keepPreviousData: true,
   });
 
   const statusMutation = useMutation({
     mutationFn: ({ id, status }) => updateBookingStatus(id, status),
     onSuccess: () => { toast.success('Status updated'); qc.invalidateQueries(['admin-bookings']); },
-    onError: (e) => toast.error(e.message),
+    onError:   e  => toast.error(e.message),
   });
 
   const cancelMutation = useMutation({
-    mutationFn: (id) => adminCancelBooking(id, 'Cancelled by admin'),
+    mutationFn: id => adminCancelBooking(id, 'Cancelled by admin'),
     onSuccess: () => { toast.success('Booking cancelled'); qc.invalidateQueries(['admin-bookings']); },
-    onError: (e) => toast.error(e.message),
+    onError:   e => toast.error(e.message),
   });
 
   const bookings   = data?.data || [];
   const pagination = data?.pagination;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-gray-900">Bookings</h2>
-        <span className="text-sm text-gray-500">{pagination?.total ?? 0} total</span>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <h2 style={{ fontWeight: 800, fontSize: '1.2rem', color: '#0f172a', margin: 0 }}>Bookings</h2>
+        <span style={{ fontSize: 12, color: '#64748b' }}>{pagination?.total ?? 0} total</span>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-wrap gap-3">
-        <input
-          type="text"
-          placeholder="Search name, email or code…"
-          value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-          className="input max-w-xs text-sm"
-        />
-        <input
-          type="date"
-          value={date}
-          onChange={(e) => { setDate(e.target.value); setPage(1); }}
-          className="input w-40 text-sm"
-        />
-        <div className="flex gap-1 flex-wrap">
-          {STATUSES.map((s) => (
-            <button
-              key={s}
-              onClick={() => { setStatus(s); setPage(1); }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize border transition-colors ${
-                status === s
-                  ? 'bg-brand-600 text-white border-brand-600'
-                  : 'bg-white text-gray-600 border-gray-200 hover:border-brand-400'
-              }`}
-            >
+      <div style={{ background: 'white', borderRadius: '1rem', border: '1px solid #e2e8f0', padding: '1rem', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <input
+            type="text" placeholder="Search name, email, code…" value={search}
+            onChange={e => { setSearch(e.target.value); setPage(1); }}
+            style={{ flex: '1 1 160px', border: '1.5px solid #e2e8f0', borderRadius: 8, padding: '0.5rem 0.75rem', fontSize: 13, outline: 'none' }}
+          />
+          <input
+            type="date" value={date}
+            onChange={e => { setDate(e.target.value); setPage(1); }}
+            style={{ flex: '0 1 140px', border: '1.5px solid #e2e8f0', borderRadius: 8, padding: '0.5rem 0.75rem', fontSize: 13, outline: 'none' }}
+          />
+        </div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+          {STATUSES.map(s => (
+            <button key={s} onClick={() => { setStatus(s); setPage(1); }}
+              style={{
+                padding: '5px 12px', borderRadius: 999, fontSize: 12, fontWeight: 700,
+                border: status === s ? '2px solid #1e3a8a' : '1.5px solid #e2e8f0',
+                background: status === s ? '#1e3a8a' : 'white',
+                color: status === s ? 'white' : '#64748b',
+                cursor: 'pointer', textTransform: 'capitalize',
+              }}>
               {s}
             </button>
           ))}
+          {(search || date || status !== 'all') && (
+            <button onClick={() => { setSearch(''); setDate(''); setStatus('all'); setPage(1); }}
+              style={{ padding: '5px 12px', borderRadius: 999, fontSize: 12, color: '#94a3b8', background: 'none', border: 'none', cursor: 'pointer' }}>
+              ✕ Clear
+            </button>
+          )}
         </div>
-        {(search || date || status !== 'all') && (
-          <button
-            onClick={() => { setSearch(''); setDate(''); setStatus('all'); setPage(1); }}
-            className="text-xs text-gray-400 hover:text-red-500 ml-auto"
-          >
-            Clear filters
-          </button>
-        )}
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        {isLoading ? (
-          <div className="flex justify-center py-16"><SpinnerIcon className="w-7 h-7 text-brand-600" /></div>
-        ) : bookings.length === 0 ? (
-          <p className="text-center text-gray-400 py-16 text-sm">No bookings found.</p>
-        ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-gray-100 text-left text-xs text-gray-500 uppercase tracking-wide">
-                <th className="px-4 py-3">Code</th>
-                <th className="px-4 py-3">Customer</th>
-                <th className="px-4 py-3">Service</th>
-                <th className="px-4 py-3">Date & Time</th>
-                <th className="px-4 py-3">Price</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {bookings.map((b) => (
-                <tr key={b._id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-4 py-3 font-mono text-xs text-brand-600 font-semibold">{b.confirmationCode}</td>
-                  <td className="px-4 py-3">
-                    <p className="font-medium text-gray-800">{b.customer?.name}</p>
-                    <p className="text-xs text-gray-400">{b.customer?.email}</p>
-                  </td>
-                  <td className="px-4 py-3 text-gray-700">{b.service?.name}</td>
-                  <td className="px-4 py-3 font-mono text-gray-700">
-                    <p>{b.date}</p>
-                    <p className="text-xs text-gray-400">{b.time}</p>
-                  </td>
-                  <td className="px-4 py-3 text-gray-700">
-                    {b.serviceSnapshot?.currency} {b.serviceSnapshot?.price?.toFixed(2)}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`text-xs font-semibold px-2 py-1 rounded-full capitalize ${STATUS_BADGE[b.status] || 'bg-gray-100'}`}>
-                      {b.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-2">
-                      {b.status === 'pending' && (
-                        <button
-                          onClick={() => statusMutation.mutate({ id: b._id, status: 'confirmed' })}
-                          className="text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 px-2 py-1 rounded-lg font-medium"
-                        >
-                          Confirm
-                        </button>
-                      )}
-                      {['pending', 'confirmed'].includes(b.status) && (
-                        <button
-                          onClick={() => statusMutation.mutate({ id: b._id, status: 'completed' })}
-                          className="text-xs bg-green-50 text-green-600 hover:bg-green-100 px-2 py-1 rounded-lg font-medium"
-                        >
-                          Complete
-                        </button>
-                      )}
-                      {['pending', 'confirmed'].includes(b.status) && (
-                        <button
-                          onClick={() => cancelMutation.mutate(b._id)}
-                          className="text-xs bg-red-50 text-red-500 hover:bg-red-100 px-2 py-1 rounded-lg font-medium"
-                        >
-                          Cancel
-                        </button>
-                      )}
-                      {b.status === 'confirmed' && (
-                        <button
-                          onClick={() => statusMutation.mutate({ id: b._id, status: 'no-show' })}
-                          className="text-xs bg-gray-100 text-gray-500 hover:bg-gray-200 px-2 py-1 rounded-lg font-medium"
-                        >
-                          No-show
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+      {/* Booking cards */}
+      {isLoading ? (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem 0' }}><SpinnerIcon /></div>
+      ) : bookings.length === 0 ? (
+        <div style={{ background: 'white', borderRadius: '1rem', border: '1px solid #e2e8f0', padding: '3rem', textAlign: 'center', color: '#94a3b8', fontSize: 14 }}>
+          No bookings found.
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {bookings.map(b => {
+            const ss = STATUS_STYLE[b.status] || STATUS_STYLE['no-show'];
+            return (
+              <div key={b._id} style={{ background: 'white', borderRadius: '1rem', border: '1px solid #e2e8f0', padding: '1rem', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+                {/* Top row */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8, gap: 8 }}>
+                  <div style={{ minWidth: 0 }}>
+                    <p style={{ fontWeight: 700, fontSize: 14, color: '#0f172a', margin: '0 0 2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {b.customer?.name}
+                    </p>
+                    <p style={{ fontSize: 12, color: '#64748b', margin: 0 }}>{b.customer?.email}</p>
+                  </div>
+                  <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 999, background: ss.bg, color: ss.color, border: `1px solid ${ss.border}`, flexShrink: 0, textTransform: 'capitalize' }}>
+                    {b.status}
+                  </span>
+                </div>
+
+                {/* Details grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 12px', marginBottom: 10, fontSize: 12 }}>
+                  <InfoCell label="Code"    value={<span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#1e3a8a' }}>{b.confirmationCode}</span>} />
+                  <InfoCell label="Service" value={b.service?.name} />
+                  <InfoCell label="Date"    value={b.date} />
+                  <InfoCell label="Time"    value={<span style={{ fontFamily: 'monospace' }}>{b.time}</span>} />
+                  <InfoCell label="Price"   value={`${b.serviceSnapshot?.currency || 'GHS'} ${b.serviceSnapshot?.price?.toFixed(2) || '—'}`} />
+                </div>
+
+                {/* Actions */}
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', borderTop: '1px solid #f1f5f9', paddingTop: 10 }}>
+                  {b.status === 'pending' && (
+                    <ActionBtn label="Confirm"  color="blue"  onClick={() => statusMutation.mutate({ id: b._id, status: 'confirmed' })} />
+                  )}
+                  {['pending', 'confirmed'].includes(b.status) && (
+                    <ActionBtn label="Complete" color="green" onClick={() => statusMutation.mutate({ id: b._id, status: 'completed' })} />
+                  )}
+                  {['pending', 'confirmed'].includes(b.status) && (
+                    <ActionBtn label="Cancel"   color="red"   onClick={() => cancelMutation.mutate(b._id)} />
+                  )}
+                  {b.status === 'confirmed' && (
+                    <ActionBtn label="No-show"  color="gray"  onClick={() => statusMutation.mutate({ id: b._id, status: 'no-show' })} />
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Pagination */}
       {pagination && pagination.pages > 1 && (
-        <div className="flex items-center justify-center gap-3">
-          <button
-            disabled={page === 1}
-            onClick={() => setPage((p) => p - 1)}
-            className="btn-secondary text-sm px-4 py-2 disabled:opacity-40"
-          >
-            Previous
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+          <button disabled={page === 1} onClick={() => setPage(p => p - 1)}
+            style={{ padding: '8px 18px', borderRadius: 8, border: '1.5px solid #e2e8f0', background: 'white', color: '#1e3a8a', fontWeight: 700, fontSize: 13, cursor: page === 1 ? 'not-allowed' : 'pointer', opacity: page === 1 ? 0.4 : 1 }}>
+            ← Prev
           </button>
-          <span className="text-sm text-gray-500">
-            Page {pagination.page} of {pagination.pages}
+          <span style={{ fontSize: 13, color: '#64748b' }}>
+            {pagination.page} / {pagination.pages}
           </span>
-          <button
-            disabled={page === pagination.pages}
-            onClick={() => setPage((p) => p + 1)}
-            className="btn-secondary text-sm px-4 py-2 disabled:opacity-40"
-          >
-            Next
+          <button disabled={page === pagination.pages} onClick={() => setPage(p => p + 1)}
+            style={{ padding: '8px 18px', borderRadius: 8, border: '1.5px solid #e2e8f0', background: 'white', color: '#1e3a8a', fontWeight: 700, fontSize: 13, cursor: page === pagination.pages ? 'not-allowed' : 'pointer', opacity: page === pagination.pages ? 0.4 : 1 }}>
+            Next →
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+function InfoCell({ label, value }) {
+  return (
+    <div>
+      <p style={{ fontSize: 10, color: '#94a3b8', margin: '0 0 1px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>{label}</p>
+      <p style={{ fontSize: 12, color: '#1e293b', margin: 0, fontWeight: 600 }}>{value}</p>
     </div>
   );
 }
