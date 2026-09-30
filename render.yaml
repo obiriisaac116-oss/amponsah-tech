@@ -1,0 +1,41 @@
+services:
+  - type: web
+    name: amponsah-tech-api
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MONGODB_URI
+        sync: false   # set manually in Render dashboard
+      - key: JWT_SECRET
+        sync: false   # set manually in Render dashboard
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: BUSINESS_NAME
+        value: Amponsah Tech
+      - key: FRONTEND_URL
+        sync: false   # set after deploying frontend, e.g. https://amponsah-tech.netlify.app
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_SECURE
+        value: "false"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: SMTP_FROM
+        sync: false
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_WHATSAPP_FROM
+        sync: false

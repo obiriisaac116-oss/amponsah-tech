@@ -1,12 +1,15 @@
 {
   "name": "booking-system-backend",
   "version": "1.0.0",
-  "description": "Booking system API server",
+  "description": "Amponsah Tech booking system API",
   "main": "src/server.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
-    "start":  "node src/server.js",
-    "dev":    "node --watch src/server.js",
-    "seed":   "node src/utils/seed.js"
+    "start": "node src/server.js",
+    "dev":   "node --watch src/server.js",
+    "seed":  "node src/utils/seed.js"
   },
   "keywords": [],
   "author": "",
