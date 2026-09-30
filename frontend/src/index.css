@@ -1,0 +1,78 @@
+@import "tailwindcss";
+
+@theme {
+  /* Amponsah Tech brand — deep navy + electric blue */
+  --color-brand-50:  #eff6ff;
+  --color-brand-100: #dbeafe;
+  --color-brand-400: #60a5fa;
+  --color-brand-500: #1e40af;
+  --color-brand-600: #1e3a8a;
+  --color-brand-700: #1e2d6b;
+  --color-accent:    #2563eb;
+}
+
+@layer base {
+  body {
+    background-color: #f8fafc;
+    color: #1e293b;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    background-color: #1e3a8a;
+    color: white;
+    font-weight: 600;
+    padding: 0.65rem 1.5rem;
+    border-radius: 0.5rem;
+    transition: background-color 0.15s;
+    cursor: pointer;
+    border: none;
+    display: inline-block;
+    text-decoration: none;
+    text-align: center;
+  }
+  .btn-primary:hover   { background-color: #1e2d6b; }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .btn-secondary {
+    background-color: white;
+    border: 1px solid #cbd5e1;
+    color: #1e3a8a;
+    font-weight: 600;
+    padding: 0.65rem 1.5rem;
+    border-radius: 0.5rem;
+    transition: background-color 0.15s;
+    cursor: pointer;
+    display: inline-block;
+    text-decoration: none;
+    text-align: center;
+  }
+  .btn-secondary:hover    { background-color: #f1f5f9; }
+  .btn-secondary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .input {
+    width: 100%;
+    border: 1px solid #cbd5e1;
+    border-radius: 0.5rem;
+    padding: 0.65rem 1rem;
+    font-size: 0.875rem;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    background: white;
+    color: #0f172a;
+  }
+  .input:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
+  }
+
+  .card {
+    background-color: white;
+    border-radius: 1rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    border: 1px solid #e2e8f0;
+    padding: 1.5rem;
+  }
+}
